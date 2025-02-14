@@ -8,9 +8,10 @@ import (
 // Warewulf to generate exports on the server and mounts on compute
 // nodes.
 type NFSConf struct {
-	EnabledP        *bool            `yaml:"enabled,omitempty" default:"true"`
-	ExportsExtended []*NFSExportConf `yaml:"export paths,omitempty" default:"[]"`
-	SystemdName     string           `yaml:"systemd name,omitempty" default:"nfsd"`
+	EnabledP               *bool                `yaml:"enabled,omitempty" default:"true"`
+	ExportsExtended        []*NFSExportConf     `yaml:"export paths,omitempty" default:"[]"`
+	GaneshaExportsExtended []*GaneshaExportConf `yaml:"ganesha exports,omitempty" default:"[]"`
+	SystemdName            string               `yaml:"systemd name,omitempty" default:"nfsd"`
 }
 
 func (conf NFSConf) Enabled() bool {
@@ -30,4 +31,11 @@ func (conf *NFSConf) Unmarshal(unmarshal func(interface{}) error) error {
 		return err
 	}
 	return nil
+}
+
+type GaneshaExportConf struct {
+	Path       string `yaml:"path" default:"/dev/null"`
+	Pseudo     string `yaml:"psuedo,omitempty"`
+	AccessType string `yaml:"access type,omitempty" default:"rw"`
+	Squash     string `yaml:"squash,omitempty" default:"root_squash"`
 }

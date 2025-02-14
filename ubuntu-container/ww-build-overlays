@@ -1,0 +1,3 @@
+#!/bin/bash
+
+wwctl node list | awk '{print $1}' | grep -v NODE | xargs -P24 -I {} wwctl overlay build {}
