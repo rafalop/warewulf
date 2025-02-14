@@ -1,0 +1,67 @@
+#!/bin/bash
+
+REGEX=""
+OUTSTYLE="newline"
+WITH_TANKS=0
+
+args=($@)
+count=0
+for arg in ${args[*]}
+do
+    pos=$(($count+1))
+    case $arg in
+    "--regex")
+        REGEX=${args[pos]}
+    ;;
+    "-o")
+        OUTSTYLE=${args[pos]}
+    ;;
+    "--with-tanks")
+        WITH_TANKS=1
+    ;;
+    *)
+    ;;
+    esac
+    ((count++))
+done
+
+all_active=$(mktemp)
+active=$(mktemp)
+wwctl node status |grep RUNTIME |awk '{ if ($4 < 61 ) print $1 }' | grep -v RUNTIME_OVERLAY > $all_active
+if [[ "$REGEX" != "" ]];then
+        inactive=$(wwctl node list -a | grep loc | egrep "$REGEX" | awk '{print $1,$4}')
+        #inactive=$(wwctl node list -a | grep loc | egrep "$regex" | awk '{print $1}')
+        #echo "$inactive"; exit
+        IFS=$'\n'
+        for node in $inactive; do
+                #echo "$node"; exit
+                host=$(echo $node | awk '{print $1}')
+                if [[ $(grep $host $all_active) ]]; then
+                        #echo "$node" >> $active
+                        if [[ $WITH_TANKS -eq 1 ]]; then
+                                echo "$node" >> $active
+                        else
+                                echo $host >> $active
+                        fi
+                fi
+        done
+else
+        cp $all_active $active
+fi
+
+if [[ $WITH_TANKS -eq 1 ]]; then
+        cat $active
+        exit
+fi
+
+if [[ "$OUTSTYLE" == "comma" ]]; then
+         cat $active | paste -sd , 
+elif [[ "$OUTSTYLE" == "pipe" ]]; then
+         cat $active | paste -sd '|' 
+elif [[ "$OUTSTYLE" == "space" ]]; then
+         cat $active | paste -sd ' ' 
+else
+        cat $active
+fi
+
+

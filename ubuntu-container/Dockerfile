@@ -1,0 +1,97 @@
+FROM ubuntu:latest AS builder
+
+ARG GO_VERSION
+ENV GO_VERSION=${GO_VERSION:-1.23.6}
+
+RUN apt-get update
+RUN apt-get install -y wget git gcc
+
+RUN wget -P /tmp "https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz"
+
+RUN tar -C /usr/local -xzf "/tmp/go${GO_VERSION}.linux-amd64.tar.gz"
+RUN rm "/tmp/go${GO_VERSION}.linux-amd64.tar.gz"
+
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+
+WORKDIR $GOPATH
+
+RUN apt update && apt install -y git libgpgme-dev unzip make curl
+## now build warewulf
+COPY . /warewulf-src
+#
+RUN cd /warewulf-src &&\
+  make clean \
+    OFFLINE_BUILD=1 &&\
+  make defaults \
+    PREFIX=/usr \
+    BINDIR=/usr/bin \
+    SYSCONFDIR=/etc \
+    DATADIR=/usr/share \
+    LOCALSTATEDIR=/var/lib \
+    SHAREDSTATEDIR=/var/lib \
+    MANDIR=/usr/share/man \
+    INFODIR=/usr/share/info \
+    DOCDIR=/usr/share/doc \
+    SRVDIR=/var/lib \
+    TFTPDIR=/srv/tftp \
+    SYSTEMDDIR=/usr/lib/systemd/system \
+    BASHCOMPDIR=/etc/warewulf/bash_completion.d/ \
+    FIREWALLDDIR=/usr/lib/firewalld/services \
+    WWCLIENTDIR=/warewulf &&\
+  make lint &&\
+  make &&\
+  make install
+#
+## now all again but just the bare install for running the stuff
+FROM ubuntu:latest
+
+COPY --from=builder /usr/bin/wwctl /usr/bin/wwctl
+COPY --from=builder /var/lib/warewulf /var/lib/warewulf
+COPY --from=builder /usr/share/warewulf /usr/share/warewulf
+COPY --from=builder /usr/lib/systemd/system/warewulfd.service /container-scripts/warewulfd.service
+COPY --from=builder /etc/warewulf /etc/warewulf
+COPY --from=builder /warewulf-src/container-scripts /container-scripts
+
+RUN apt update && \
+    apt install -y \
+  cpio \
+  gzip \
+  pigz \
+  rsync \
+  openssh-client \
+  less \
+  isc-dhcp-server \
+  iproute2 \
+  vim \
+  tree \
+  tftpd-hpa \
+  supervisor \
+  nfs-ganesha \
+  nfs-ganesha-vfs
+
+RUN  apt clean && \
+  rm -rf /var/cache/apt/archives/* \
+  rm -rf /var/lib/apt/lists/*
+
+COPY ubuntu-container/warewulf.conf /etc/warewulf/warewulf.conf
+#COPY ubuntu-container/ganesha.conf /etc/ganesha/ganesha.conf
+COPY ubuntu-container/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY ubuntu-container/entrypoint.sh /entrypoint.sh
+COPY ubuntu-container/wwactive /usr/bin/wwactive
+COPY ubuntu-container/ww-build-overlays /usr/bin/ww-build-overlays
+COPY ubuntu-container/ww-add-node.sh /usr/bin/ww-add-node.sh
+COPY ubuntu-container/ipxe-snponly-x86_64.efi /usr/local/share/ipxe/ipxe-snponly-x86_64.efi
+
+RUN chmod +x /entrypoint.sh
+RUN mkdir /vol && \
+   mkdir -p /var/run/ganesha && \
+   touch /var/lib/dhcp/dhcpd.leases
+  
+
+ENTRYPOINT  [ "/entrypoint.sh" ]
+
+EXPOSE 67/udp 68/udp 69/udp 80 9873 2049/udp 2049/tcp
+
+

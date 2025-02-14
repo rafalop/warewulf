@@ -28,6 +28,7 @@ type WarewulfYaml struct {
 	Ipaddr      string        `yaml:"ipaddr,omitempty"`
 	Ipaddr6     string        `yaml:"ipaddr6,omitempty"`
 	Netmask     string        `yaml:"netmask,omitempty"`
+	Prefix      string        `yaml:"network prefix,omitempty"`
 	Network     string        `yaml:"network,omitempty"`
 	Ipv6net     string        `yaml:"ipv6net,omitempty"`
 	Fqdn        string        `yaml:"fqdn,omitempty"`
