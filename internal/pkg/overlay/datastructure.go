@@ -27,6 +27,7 @@ type TemplateStruct struct {
 	IpCIDR        string
 	Ipaddr6       string
 	Netmask       string
+	Prefix        string
 	Network       string
 	NetworkCIDR   string
 	Overlay       string
@@ -71,6 +72,7 @@ func InitStruct(overlayName string, nodeData node.Node, allNodes []node.Node) (T
 	tstruct.IpCIDR = controller.IpCIDR()
 	tstruct.Ipaddr6 = controller.Ipaddr6
 	tstruct.Netmask = controller.Netmask
+	tstruct.Prefix = controller.Prefix
 	tstruct.Network = controller.Network
 	tstruct.NetworkCIDR = controller.NetworkCIDR()
 	// init some convenience vars

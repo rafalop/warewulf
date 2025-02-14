@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"io"
 	"io/fs"
 	"net"
@@ -17,8 +18,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"gopkg.in/yaml.v3"
 
 	"github.com/warewulf/warewulf/internal/pkg/wwlog"
 )
@@ -296,18 +295,21 @@ func ExecInteractive(command string, a ...string) error {
 }
 
 func SystemdStart(systemdName string) error {
-	startCmd := fmt.Sprintf("systemctl restart %s", systemdName)
-	enableCmd := fmt.Sprintf("systemctl enable %s", systemdName)
+	//startCmd := fmt.Sprintf("systemctl restart %s", systemdName)
+	//enableCmd := fmt.Sprintf("systemctl enable %s", systemdName)
 
-	wwlog.Debug("Setting up Systemd service: %s", systemdName)
+	//wwlog.Debug("Setting up Systemd service: %s", systemdName)
+	// Raf: replace commands to use supervisor for container
+	startCmd := fmt.Sprintf("supervisorctl restart %s", systemdName)
+	wwlog.Debug("Setting up supervisord service: %s", systemdName)
 	err := ExecInteractive("/bin/sh", "-c", startCmd)
 	if err != nil {
 		return fmt.Errorf("failed to run start cmd: %w", err)
 	}
-	err = ExecInteractive("/bin/sh", "-c", enableCmd)
-	if err != nil {
-		return fmt.Errorf("failed to run enable cmd: %w", err)
-	}
+	//err = ExecInteractive("/bin/sh", "-c", enableCmd)
+	//if err != nil {
+	//	return fmt.Errorf("failed to run enable cmd: %w", err)
+	//}
 
 	return nil
 }
