@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Mock service shell script to reload config for warewulf
+# to match https://github.com/warewulf/warewulf/blob/93fc742d801bd5cb45c33dcac73c26fed86d211d/internal/pkg/warewulfd/daemon.go#L95
+# and https://github.com/warewulf/warewulf/blob/93fc742d801bd5cb45c33dcac73c26fed86d211d/include/systemd/warewulfd.service.in#L13
+
+service=$1
+cmd=$2
+
+if [[ "$1" == "warewulfd" ]] && [[ "$2" == "reload" ]]; then
+	# get pid for warewulf
+	pid=$(pgrep -f /usr/bin/wwctl server)
+	# send HUP
+	if [[ $pid -ne 0 ]]; then
+		/bin/kill -HUP $pid
+		exit $?
+	else
+		echo "PID of warewulfd could not be established!"
+		exit 1
+	fi
+fi

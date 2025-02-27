@@ -47,10 +47,18 @@ RUN cd /warewulf-src &&\
   make &&\
   make install
 
+# unpack slurm 
+ARG SLURM_TARBALL
+COPY ${SLURM_TARBALL} /${SLURM_TARBALL}
+RUN mkdir -p /opt && \
+	tar -C /opt -zxf /${SLURM_TARBALL}
+
 
 ## now all again but just the bare install for running the stuff
 FROM ubuntu:latest
 
+# slurm
+COPY --from=builder /opt/ /opt
 # ww
 COPY --from=builder /usr/bin/wwctl /usr/bin/wwctl
 COPY --from=builder /var/lib/warewulf /var/lib/warewulf
@@ -89,6 +97,9 @@ COPY ubuntu-container/ww-build-overlays /usr/bin/ww-build-overlays
 COPY ubuntu-container/ww-add-node.sh /usr/bin/ww-add-node.sh
 COPY ubuntu-container/ipxe-snponly-x86_64.efi /usr/local/share/ipxe/ipxe-snponly-x86_64.efi
 COPY ubuntu-container/service /usr/sbin/service
+## todo - fix these template files in slurm conf, or use mounted configmap/file
+COPY ubuntu-container/slurm/slurm.conf /opt/slurm/etc/slurm.conf
+COPY ubuntu-container/slurm/slurmdbd.conf /opt/slurm/etc/slurmdbd.conf
 
 RUN chmod +x /entrypoint.sh
 RUN mkdir /vol && \
