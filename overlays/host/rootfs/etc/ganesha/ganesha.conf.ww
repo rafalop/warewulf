@@ -13,6 +13,7 @@ EXPORT {
         Export_Id = 1{{ $index }};
         Path = {{ $export.Path }};
         Pseudo = {{ if eq $export.Pseudo "" }}{{ $export.Path }}{{ else }}{{ $export.Pseudo }}{{ end }};
+        {{ if not (eq $export.AccessType "") }}Access_Type = {{ $export.AccessType }};{{ end }}
         Protocols = 4;
         Squash = {{ $export.Squash }};
         Sectype = sys;

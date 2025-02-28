@@ -13,6 +13,7 @@ sed -i "s/{{WW_DHCP_START}}/$WW_DHCP_START/g" /etc/warewulf/warewulf.conf
 sed -i "s/{{WW_DHCP_END}}/$WW_DHCP_END/g" /etc/warewulf/warewulf.conf
 sed -i "s/{{WW_NET_PREFIX}}/$WW_NET_PREFIX/g" /etc/warewulf/warewulf.conf
 
+
 # Configure wulf to use volume dirs.
 # Fail if we don't have a separate volume at /vol
 if ! mountpoint -q /vol; then
@@ -34,6 +35,16 @@ else
 		ln -s /vol/warewulf/etc /etc/warewulf
 	fi
 fi
+
+# Enable nfs
+if [[ $SERVE_NFS -eq 1 ]]; then
+	echo "SERVE_NFS=1, letting warewulf manage NFS"
+	sed -i '/^nfs:/{n;s/enabled: false/enabled: true/;}' /etc/warewulf/warewulf.conf
+else
+	echo "SERVE_NFS=0 or unset, NFS will not be served from the container."
+	sed -i '/^nfs:/{n;s/enabled: .*/enabled: false/;}' /etc/warewulf/warewulf.conf
+fi
+
 # Prepare dirs (never ran container using this volume)
 for dir in chroots provision overlays; do
 	if [[ ! -d /var/lib/warewulf/$dir ]]; then
@@ -113,6 +124,7 @@ SLURM_DBD_EOF
 		mkdir -p /vol/slurm/statesave && chown -R slurm:slurm /vol/slurm
 	fi
 fi
+
 
 
 
