@@ -24,6 +24,8 @@ sudo docker build . --build-arg SLURM_TARBALL=ubuntu-container/slurm/slurm24.11.
 ## Running the container
 ### Storage requirements
 A persistent volume needs to be supplied and mounted at /vol in the container. This is to store logs, and persistent data (eg. warewulf images etc). Since it will storage full operating system images, it is recommended this is large - eg. 50G+.
+### Configuration persistence
+The warewulf configuration will be linked from /vol/warewulf/etc back to /etc/warewulf, this way it will be persistent if the container needs to be restarted or moved. Other configuration (dhcp, nfs etc) is also on persistent volume or simply taken care of by warewulf.
 ### Required variables
 At a minimum, these vars are required to be set for the warewulf container to operate:
 WW_IPADDR={ip address to serve warewulf on, host ip, or floating ip}
