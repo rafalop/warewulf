@@ -71,6 +71,9 @@ fi
 
 # setup slurm config
 if [[ -d /opt/slurm ]]; then
+	if [[ "$SLURM_CTLD_HOST" == "" ]]; then
+		SLURM_CTLD_HOST=$WW_IP_ADDR
+	fi
 	groupadd slurm && useradd -g slurm slurm && \
 	mkdir -p /run/munge && chown munge:munge /run/munge && \
 	mkdir -p /var/log/slurm && mkdir -p /run/slurm && \
@@ -79,7 +82,6 @@ if [[ -d /opt/slurm ]]; then
 	echo 'PATH=$PATH:/opt/slurm/sbin:/opt/slurm/bin' >> /root/.bashrc
 	chown slurm:slurm /opt/slurm/etc/slurm.conf
 	echo "Found slurm, adding to supervisor."
-	sed -i "s/{{SLURM_STORAGE_HOST}}/$SLURM_STORAGE_HOST/g" /opt/slurm/etc/slurm.conf
 	sed -i "s/{{SLURM_SLURMCTLD_HOST}}/$SLURM_SLURMCTLD_HOST/g" /opt/slurm/etc/slurm.conf
 	cat <<SLURM_EOF >> /etc/supervisor/conf.d/supervisord.conf
 [program:munge]
@@ -97,10 +99,11 @@ autorestart=true
 user=slurm
 SLURM_EOF
 
-	if [[ -n "$SLURM_DBD_HOST" ]]; then
+	# set up slurmdbd optionally
+	if [[ -n "$SLURM_SLURMDBD_HOST" ]]; then
 		chown slurm:slurm /opt/slurm/etc/slurmdbd.conf
 		# todo insert test for storage (mysql) server, consider failing if it isn't up
-		sed -i "s/{{SLURM_DBD_HOST}}/$SLURM_DBD_HOST/g" /opt/slurm/etc/slurmdbd.conf
+		sed -i "s/{{SLURM_SLURMDBD_HOST}}/$SLURM_SLURMDBD_HOST/g" /opt/slurm/etc/slurmdbd.conf
 		sed -i "s/{{SLURM_STORAGE_HOST}}/$SLURM_STORAGE_HOST/g" /opt/slurm/etc/slurmdbd.conf
 		sed -i "s/{{SLURM_STORAGE_PASS}}/$SLURM_STORAGE_PASS/g" /opt/slurm/etc/slurmdbd.conf
 		echo "AccountingStorageType=accounting_storage/slurmdbd" >> /opt/slurm/etc/slurm.conf
