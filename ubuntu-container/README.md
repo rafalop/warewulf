@@ -18,7 +18,7 @@ sudo docker build . --network=host -t wulf:latest -f ubuntu-container/Dockerfile
 ```
 With slurm (tarball packed as specified above):
 ```
-sudo docker build . --build-arg SLURM_TARBALL=ubuntu-container/slurm/slurm24.11.1.tgz --network=host -t wulf-slurm:latest -f ubuntu-container/Dockerfile-slurm
+sudo docker build . --build-arg SLURM_TARBALL=/path/to/slurm/tarball/slurm24.11.1.tgz --network=host -t wulf-slurm:latest -f ubuntu-container/Dockerfile-slurm
 ```
 
 ## Running the container
@@ -49,3 +49,7 @@ Assuming the above variables are in file called `env.list`, and your persistent 
 ```
 sudo docker run --privileged -d --name wulf --env-file env.list -v /srv/vol:/vol --network=host wulf:latest
 ```
+### Kubernetes
+- To run the container on kubernetes, most of the above applies - eg. privileged, host networking, required environment variables. By running on kubernetes, it is implied that you are looking to run a replicaset that auto schedules on a new host if the serving host dies. In that case, you will need a load balancer deployed in k8s to supply a floating IP. Examples for using metallb are contained in this directory `metallb-config.yaml` and `floating-ip-pool.yaml`. These will set up metallb (you need to deploy metallb first) for you to have a floating ip that can subsequently be configured in the warewulf yaml manifest for the WW_IPADDR. Use of other load balancer types should also be possible.
+- You will need to set up a secret (see yaml example) for the mariadb/mysql password used by slurmdbd
+- Use wulf-slurm.yaml.example as a starting point for your configured service.

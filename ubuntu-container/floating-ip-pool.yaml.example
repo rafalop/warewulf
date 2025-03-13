@@ -1,0 +1,8 @@
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: floating-ip-pool
+spec:
+  cidr: 192.168.100.0/24 
+  natOutgoing: false
+  disabled: false
